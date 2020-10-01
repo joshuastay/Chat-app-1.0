@@ -3,18 +3,21 @@ import tkinter as tk
 import threading
 from _thread import start_new_thread
 
-frame = tk.Tk()
+chat_window = tk.Tk()
 
-HOST = '192.168.0.164'
+hostname = socket.gethostname()
+HOST = socket.gethostbyname(hostname)
 PORT = 9999
+
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.bind((HOST, PORT))
 sock.listen()
+
 conn_list = list()
-#conn, addr = sock.accept()
+
 
 def client_scan():
-    global conn, addr
+    global conn
     while True:
         conn, addr = sock.accept()
         start_new_thread(chat_in, (conn, addr))
@@ -22,39 +25,47 @@ def client_scan():
 
 
 def chat_in(conn, addr):
-    global conn_list
     while True:
         data = conn.recv(1024)
+        if not data:
+            conn_list.remove(conn)
+            break
         for each in conn_list:
             each.sendall(data)
         if data:
-            text.config(state=tk.NORMAL)
-            text.insert(tk.INSERT, data.decode() + '\n')
-            text.config(state=tk.DISABLED)
+            host_chat.config(state=tk.NORMAL)
+            host_chat.insert(tk.INSERT, data.decode() + '\n')
+            host_chat.config(state=tk.DISABLED)
         else:
-            text.config(state=tk.DISABLED)
+            host_chat.config(state=tk.DISABLED)
 
 
-def chat_out():
-    while True:
-        message = input("Type Message")
-        conn.sendall(message.encode())
+def chat_out(event=None):
+    global conn_list, conn
+    message = '<Host>: ' + host_field.get()
+    host_chat.config(state=tk.NORMAL)
+    host_chat.insert(tk.INSERT, message + '\n')
+    host_chat.config(state=tk.DISABLED)
+    for each in conn_list:
+        each.sendall(message.encode())
+    host_chat.insert(tk.INSERT, message)
+    host_field.delete(0, tk.END)
 
 
-# entry = tk.Entry(frame, width=50)
-# entry.place(x=15, y=320, width=415, height=24)
-# entry.bind()
+send_button = tk.Button(chat_window, text='Send', command=chat_out)
+send_button.place(x=440, y=319, width=50)
+host_field = tk.Entry(chat_window, width=50)
+host_field.place(x=15, y=320, width=415, height=24)
+host_field.bind('<Return>', chat_out)
 get_clients = threading.Thread(target=client_scan)
 get_clients.daemon = True
 get_clients.start()
 
-chat_box = threading.Thread(target=chat_in)
-chat_box.daemon = True
-chat_box.start()
-
-text = tk.Text(frame, height=19, width=50)
-text.pack(pady=5, padx=5, fill='x')
-frame.geometry('500x350')
-frame.config(bg='black')
-frame.resizable(False, False)
-frame.mainloop()
+host_chat = tk.Text(chat_window, height=19, width=50)
+host_chat.insert(tk.INSERT, 'Server started at: ' + HOST + ':' + str(PORT) + '\n')
+host_chat.pack(pady=5, padx=5, fill='x')
+chat_window.geometry('500x350')
+chat_window.config(bg='black')
+chat_window.resizable(False, False)
+chat_window.title('Chat Room Host')
+chat_window.mainloop()
