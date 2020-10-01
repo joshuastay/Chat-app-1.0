@@ -55,3 +55,4 @@ class ClientFrame:
             self.sock.send(enter_chat.encode())
         except:
             pass
+
