@@ -2,6 +2,10 @@ from tkinter import *
 
 
 class PromptUser:
+    '''
+    Prompt user class constructs a window to ask the user for information on the server
+    they wish to log in to, including Ip address, port and a username
+    '''
     def __init__(self, master):
         self.master = master
         self.host_add = ""
@@ -28,12 +32,14 @@ class PromptUser:
         self.user_label = Label(master, text='Username: ')
         self.user_label.place(x=20, y=79)
 
+    # gets the values of each field to store them in the instance variable
     def connection(self):
         self.host_add = self.host_entry.get()
         self.port_add = self.port_entry.get()
         self.new_user = self.user_entry.get()
         self.master.destroy()
 
+    # returns each variable to be used in client connection
     def get_info(self):
         new_host = self.host_add
         new_port = self.port_add
